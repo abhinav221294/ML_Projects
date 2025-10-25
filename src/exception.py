@@ -1,6 +1,6 @@
 # Import the sys module to access exception information
 import sys
-
+from src.logger import logging
 # Function to create a detailed error message
 def error_message_detail(error, error_details: sys):
     """
@@ -25,8 +25,7 @@ def error_message_detail(error, error_details: sys):
     
     # Format the error message with filename, line number, and original error message
     error_message = "Error occured in python script name [{0}] line number [{1}] error message[{2}]".format(
-        file_name, exc_tb.tb_lineno, str(error)
-    )
+        file_name, exc_tb.tb_lineno, str(error))
 
     # Return the formatted message
     return error_message
