@@ -144,6 +144,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Conda environment folder
+studentMLProject/
+
 # Spyder project settings
 .spyderproject
 .spyproject
