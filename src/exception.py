@@ -1,6 +1,6 @@
 # Import the sys module to access exception information
 import sys
-from src.logger import logging
+from logger import logging
 # Function to create a detailed error message
 def error_message_detail(error, error_details: sys):
     """
