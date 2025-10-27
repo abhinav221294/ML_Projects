@@ -1,92 +1,122 @@
-# Importing standard modules for file handling and system operations
-import os  # Provides functions for interacting with the operating system (e.g., file paths, directories)
-import sys  # Provides access to system-specific parameters and functions (used for exception handling)
+# ===============================
+# IMPORTING REQUIRED LIBRARIES
+# ===============================
 
-# Importing custom exception and logger modules
-from exception import CustomException  # Custom exception class for detailed error reporting
-from logger import logging  # Custom logger to log info, warnings, errors
+# Standard modules for file handling and system operations
+import os  # Used for file path management, directory creation, etc.
+import sys  # Used for system-specific functions (like passing exception info)
 
-# Importing external libraries for data handling and machine learning
-import pandas as pd  # Pandas is used for data manipulation and analysis
-from sklearn.model_selection import train_test_split  # Function to split dataset into train and test sets
-from dataclasses import dataclass  # Provides decorator to simplify class creation for storing configuration data
+# Custom exception and logger modules (from your own project)
+from exception import CustomException  # Custom exception class to provide detailed traceback and error context
+from logger import logging  # Custom logger to record information, warnings, and errors throughout execution
 
-from components.data_transformation import DataTransformation,DataTransformationConfig
+# External libraries for data handling and machine learning
+import pandas as pd  # Pandas is used for reading, writing, and manipulating tabular data
+from sklearn.model_selection import train_test_split  # Splits dataset into training and testing subsets
+from dataclasses import dataclass  # Simplifies creation of configuration classes with default attributes
 
-from components.model_trainer import ModelTrainer, ModelTrainerConfig
+# Importing internal components for further pipeline steps
+from components.data_transformation import DataTransformation, DataTransformationConfig  # Handles feature preprocessing
+from components.model_trainer import ModelTrainer, ModelTrainerConfig  # Handles model training and evaluation
 
 
-# DataIngestionConfig is a dataclass that holds paths for storing dataset files
+# ===============================
+# CONFIGURATION CLASS
+# ===============================
+
+# This dataclass defines and stores configuration values related to data ingestion
 @dataclass
 class DataIngestionConfig:
-    # Path where training data will be saved
+    # File path for training data (after splitting)
     train_data_path: str = os.path.join('artifacts', "train.csv")
-    # Path where testing data will be saved
+    # File path for testing data (after splitting)
     test_data_path: str = os.path.join('artifacts', "test.csv")
-    # Path where the raw dataset will be saved
+    # File path for saving the raw dataset (before splitting)
     raw_data_path: str = os.path.join('artifacts', "data.csv")
 
 
-# Main class responsible for data ingestion operations
+# ===============================
+# DATA INGESTION CLASS
+# ===============================
+
+# This class handles all operations related to reading raw data,
+# saving it locally, and splitting it into training and testing datasets.
 class DataIngestion:
     def __init__(self):
-        # Initialize ingestion configuration by creating an instance of DataIngestionConfig
+        # Initialize the configuration object
         self.ingestion_config = DataIngestionConfig()
 
-    # Method to read raw dataset, save it, and split into train and test sets
+    # Main method that performs the ingestion steps
     def initiate_data_ingestion(self):
-        logging.info("Entered the data ingestion method or components")  # Log the start of ingestion
+        # Log the entry point of the ingestion process
+        logging.info("Entered the data ingestion method or components")
 
         try:
-            # Read the CSV file into a Pandas DataFrame
-            # The path here is relative to the project directory
+            # Step 1: Read raw dataset into a pandas DataFrame
+            # (Make sure the file exists at the specified location)
             df = pd.read_csv('src/notebook/data/stud.csv')
-            logging.info("Read the dataset as dataframe")  # Log successful read
+            logging.info("Read the dataset as dataframe")  # Log successful data loading
 
-            # Get the directory where raw data will be saved
+            # Step 2: Create directories for saving raw data (if they don't already exist)
             raw_data_dir = os.path.dirname(self.ingestion_config.raw_data_path)
             
-            # Create the directory if it does not exist
             if not os.path.exists(raw_data_dir):
-                os.makedirs(raw_data_dir)
+                os.makedirs(raw_data_dir)  # Create the 'artifacts' folder if missing
 
-            # Save the raw dataset as CSV
+            # Step 3: Save the raw dataset to CSV in the artifacts directory
             df.to_csv(self.ingestion_config.raw_data_path, index=False, header=True)
 
-            logging.info("Train test split initiated")  # Log start of train-test split
+            logging.info("Train test split initiated")  # Log the start of the train-test split process
 
-            # Split the dataset into training and testing sets (80% train, 20% test)
+            # Step 4: Split dataset into train (80%) and test (20%)
+            # random_state ensures reproducibility
             train_set, test_set = train_test_split(df, test_size=0.2, random_state=42)
 
-            # Save the training set to CSV
+            # Step 5: Save the resulting train and test sets into CSV files
             train_set.to_csv(self.ingestion_config.train_data_path, index=False, header=True)
-            # Save the testing set to CSV
             test_set.to_csv(self.ingestion_config.test_data_path, index=False, header=True)
 
-            logging.info("Ingestion of the data is completed")  # Log completion of ingestion
+            logging.info("Ingestion of the data is completed")  # Log successful completion
 
-            # Return the paths of train, test, and raw datasets
+            # Step 6: Return paths to the created files
             return (
                 self.ingestion_config.train_data_path,
                 self.ingestion_config.test_data_path,
-                #self.ingestion_config.raw_data_path
-            ) 
+                # self.ingestion_config.raw_data_path  # optional, currently commented out
+            )
+
         except Exception as e:
-            # If any exception occurs, raise a CustomException with detailed info
+            # If any step fails, wrap the error in a CustomException for better debugging
             raise CustomException(e, sys)
 
 
-# Main entry point of the script
+# ===============================
+# MAIN EXECUTION BLOCK
+# ===============================
+
+# This section only runs when the script is executed directly (not imported)
 if __name__ == "__main__":
-    # Optionally, you can check which `os` module is being used
+    # Optional: Uncomment to print the path of the OS module being used
     # print(os.__file__)
 
-    # Create an instance of DataIngestion and run the ingestion process
+    # Step 1: Instantiate the DataIngestion class
     obj = DataIngestion()
+
+    # Step 2: Call the data ingestion process to get training and testing file paths
     train_data, test_data = obj.initiate_data_ingestion()
 
+    # Step 3: Initialize Data Transformation stage
+    # This will preprocess both the train and test datasets (handle missing values, encode categories, scale numbers)
     data_transformation = DataTransformation()
-    train_arr,test_arr,_ =data_transformation.initiate_data_transformation(train_path=train_data, test_path=test_data)
-    
+    train_arr, test_arr, _ = data_transformation.initiate_data_transformation(
+        train_path=train_data,
+        test_path=test_data
+    )
+
+    # Step 4: Initialize Model Trainer stage
+    # This stage will train ML models (e.g., Linear Regression, Random Forest, etc.)
     modeltrainer = ModelTrainer()
+
+    # Step 5: Start the model training process using transformed data
+    # The model training class will train multiple models, evaluate them, and print the best score
     print(modeltrainer.inititate_model_trainer(train_arr, test_arr))
