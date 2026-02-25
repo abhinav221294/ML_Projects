@@ -1,0 +1,19 @@
+# Virtual environments
+venv/
+env/
+clv_projects/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Data & artifacts
+data/
+artifacts/
+
+# Model files
+*.pkl
+*.joblib
+
+# OS
+.DS_Store
